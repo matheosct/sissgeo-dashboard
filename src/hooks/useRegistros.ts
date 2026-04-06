@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Registro, loadCSV } from '@/lib/dataUtils';
+import { useEffect, useState, useCallback } from 'react';
+import { Registro, loadCSV, parseCSVText } from '@/lib/dataUtils';
 
 export function useRegistros() {
   const [data, setData] = useState<Registro[]>([]);
@@ -12,5 +12,13 @@ export function useRegistros() {
     });
   }, []);
 
-  return { data, loading };
+  const updateFromCSV = useCallback((text: string) => {
+    const records = parseCSVText(text);
+    if (records.length > 0) {
+      setData(records);
+    }
+    return records.length;
+  }, []);
+
+  return { data, loading, updateFromCSV };
 }
