@@ -7,15 +7,9 @@ export interface Registro {
   inclusionDate: string;
 }
 
-export async function loadCSV(): Promise<Registro[]> {
-  const res = await fetch('/data/registros.csv');
-  const buffer = await res.arrayBuffer();
-  const decoder = new TextDecoder('iso-8859-1');
-  const text = decoder.decode(buffer);
-  
+export function parseCSVText(text: string): Registro[] {
   const lines = text.split('\n').filter(l => l.trim());
   const records: Registro[] = [];
-  
   for (let i = 1; i < lines.length; i++) {
     const parts = lines[i].split(';').map(s => s.replace(/"/g, '').trim());
     if (parts.length >= 6) {
@@ -29,6 +23,15 @@ export async function loadCSV(): Promise<Registro[]> {
       });
     }
   }
+  return records;
+}
+
+export async function loadCSV(): Promise<Registro[]> {
+  const res = await fetch('/data/registros.csv');
+  const buffer = await res.arrayBuffer();
+  const decoder = new TextDecoder('iso-8859-1');
+  const text = decoder.decode(buffer);
+  return parseCSVText(text);
   return records;
 }
 
