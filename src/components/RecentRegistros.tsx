@@ -14,7 +14,7 @@ export function RecentRegistros({ data }: Props) {
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
-        <Clock className="h-4 w-4 text-primary" />
+        <Clock className="h-6 w-6 text-primary" />
         <CardTitle className="text-base font-semibold">Registros Mais Recentes</CardTitle>
       </CardHeader>
       <CardContent className="p-0">

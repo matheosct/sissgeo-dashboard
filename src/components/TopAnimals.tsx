@@ -13,7 +13,7 @@ export function TopAnimals({ data }: Props) {
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
-        <PawPrint className="h-4 w-4 text-primary" />
+        <PawPrint className="h-6 w-6 text-primary" />
         <CardTitle className="text-base font-semibold">Top 5 Tipos de Animais</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

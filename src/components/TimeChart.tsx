@@ -29,7 +29,7 @@ export function TimeChart({ data }: Props) {
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" />
+            <TrendingUp className="h-6 w-6 text-primary" />
             <CardTitle className="text-base font-semibold">Registros ao Longo do Tempo</CardTitle>
           </div>
           <div className="flex gap-2 flex-wrap">
