@@ -32,7 +32,6 @@ export async function loadCSV(): Promise<Registro[]> {
   const decoder = new TextDecoder('iso-8859-1');
   const text = decoder.decode(buffer);
   return parseCSVText(text);
-  return records;
 }
 
 export function getTopN<T>(items: T[], key: (item: T) => string, n: number): { name: string; count: number }[] {
