@@ -44,7 +44,7 @@ export function StatCards({ data }: Props) {
         <Card key={c.title} className="border-0 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">{c.title}</CardTitle>
-            <c.icon className="h-4 w-4 text-primary" />
+            <c.icon className="h-6 w-6 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold truncate">{c.value}</div>

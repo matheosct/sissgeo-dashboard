@@ -74,7 +74,7 @@ export function BrazilMap({ data }: Props) {
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center gap-2 pb-3">
-        <Map className="h-4 w-4 text-primary" />
+        <Map className="h-6 w-6 text-primary" />
         <CardTitle className="text-base font-semibold">Mapa de Registros por Estado</CardTitle>
       </CardHeader>
       <CardContent>
