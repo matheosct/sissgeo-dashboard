@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 interface Props {
   to: string;
   label: string;
-  active?: boolean;
+  active?: boolean; // override auto-detection
 }
 
 export function AppNavLink({ to, label, active: forceActive }: Props) {
