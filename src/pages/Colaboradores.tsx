@@ -1,22 +1,16 @@
 import { useRegistros } from '@/hooks/useRegistros';
 import { useColaboradores } from '@/hooks/useColaboradores';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { StatCards } from '@/components/StatCards';
-import { RecentRegistros } from '@/components/RecentRegistros';
-import { TopAnimals } from '@/components/TopAnimals';
-import { TimeChart } from '@/components/TimeChart';
-import { BrazilMap } from '@/components/BrazilMap';
+import { ColaboradoresTable } from '@/components/ColaboradoresTable';
 import { CSVUpload } from '@/components/CSVUpload';
 import { Loader2, Activity } from 'lucide-react';
 import { AppNavLink } from '@/components/AppNavLink';
 
-const Index = () => {
-  const { data: registros, loading: loadingReg, updateFromCSV: updateRegistros } = useRegistros();
-  const { loading: loadingColab } = useColaboradores();
+const Colaboradores = () => {
+  const { data: registros, loading: loadingReg } = useRegistros();
+  const { data: colaboradores, loading: loadingColab } = useColaboradores();
 
-  const loading = loadingReg || loadingColab;
-
-  if (loading) {
+  if (loadingReg || loadingColab) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -34,33 +28,23 @@ const Index = () => {
               <h1 className="text-lg font-bold">Dashboard SISS-Geo</h1>
             </div>
             <nav className="flex items-center gap-1">
-              <AppNavLink to="/" label="Registros" active />
-              <AppNavLink to="/colaboradores" label="Colaboradores" />
+              <AppNavLink to="/" label="Registros" />
+              <AppNavLink to="/colaboradores" label="Colaboradores" active />
               <AppNavLink to="/insights" label="Insights" />
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <CSVUpload onUpload={updateRegistros} />
+            <CSVUpload onUpload={() => 0} />
             <ThemeToggle />
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <StatCards data={registros} />
-          <div className="h-full" style={{ maxHeight: '360px' }}>
-            <RecentRegistros data={registros} />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TopAnimals data={registros} />
-          <BrazilMap data={registros} />
-        </div>
-        <TimeChart data={registros} />
+        <ColaboradoresTable colaboradores={colaboradores} registros={registros} />
       </main>
     </div>
   );
 };
 
-export default Index;
+export default Colaboradores;
