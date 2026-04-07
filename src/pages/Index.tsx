@@ -52,7 +52,9 @@ const Index = () => {
           <TopAnimals data={registros} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <RecentRegistros data={registros} />
+            <div style={{ height: '460px' }}>
+              <RecentRegistros data={registros} />
+            </div>
             <BrazilMap data={registros} />
         </div>
         <TimeChart data={registros} />
