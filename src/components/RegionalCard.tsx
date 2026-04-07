@@ -25,7 +25,7 @@ export function RegionalCard({ colaboradores }: Props) {
   const total = colaboradores.length;
 
   return (
-    <Card>
+    <Card className='col-span-3'>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <Globe className="h-5 w-5 text-primary" />

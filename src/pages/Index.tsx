@@ -49,13 +49,11 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <StatCards data={registros} />
-          <div className="h-full" style={{ maxHeight: '360px' }}>
-            <RecentRegistros data={registros} />
-          </div>
+          <TopAnimals data={registros} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TopAnimals data={registros} />
-          <BrazilMap data={registros} />
+            <RecentRegistros data={registros} />
+            <BrazilMap data={registros} />
         </div>
         <TimeChart data={registros} />
       </main>

@@ -159,33 +159,35 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Total Colaboradores</p>
-              <p className="text-2xl font-bold">{totalColab.toLocaleString('pt-BR')}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Total Especialistas</p>
-              <p className="text-2xl font-bold">{totalEsp.toLocaleString('pt-BR')}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <MapPin className="h-8 w-8 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Estados</p>
-              <p className="text-2xl font-bold">{estados.length}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="col-span-1 grid grid-cols-1 gap-4">
+          <Card>
+            <CardContent className="p-4 flex items-center-top gap-3">
+              <Users className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Colaboradores</p>
+                <p className="text-4xl font-bold">{totalColab.toLocaleString('pt-BR')}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center-top gap-3">
+              <GraduationCap className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Especialistas</p>
+                <p className="text-4xl font-bold">{totalEsp.toLocaleString('pt-BR')}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center-top gap-3">
+              <MapPin className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Estados</p>
+                <p className="text-4xl font-bold">{estados.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
         <RegionalCard colaboradores={colaboradores} />
       </div>
 
