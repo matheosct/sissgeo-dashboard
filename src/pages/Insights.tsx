@@ -275,9 +275,9 @@ const Insights = () => {
               <h1 className="text-lg font-bold">Dashboard SISS-Geo</h1>
             </div>
             <nav className="flex items-center gap-1">
-              <NavLink to="/" label="Registros" />
-              <NavLink to="/colaboradores" label="Colaboradores" />
-              <NavLink to="/insights" label="Insights" active />
+              <AppNavLink to="/" label="Registros" />
+              <AppNavLink to="/colaboradores" label="Colaboradores" />
+              <AppNavLink to="/insights" label="Insights" active />
             </nav>
           </div>
           <ThemeToggle />
