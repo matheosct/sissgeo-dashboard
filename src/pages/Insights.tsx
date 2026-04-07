@@ -8,7 +8,7 @@ import { Registro } from '@/lib/dataUtils';
 import { Colaborador } from '@/lib/colaboradorUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { NavLink } from '@/components/NavLink';
+import { AppNavLink } from '@/components/AppNavLink';
 import { Activity } from 'lucide-react';
 
 /* ── 1. Species Diversity by Region ── */
