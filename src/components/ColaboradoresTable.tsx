@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Colaborador } from '@/lib/colaboradorUtils';
 import { Registro } from '@/lib/dataUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,9 +8,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, GraduationCap, Search, MapPin, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Users, GraduationCap, Search, MapPin, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RegionalCard } from '@/components/RegionalCard';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Props {
   colaboradores: Colaborador[];
@@ -18,35 +20,65 @@ interface Props {
 }
 
 type SortDir = 'asc' | 'desc' | null;
-type SortState = { col: string; dir: SortDir };
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   if (!active || !dir) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
   return dir === 'asc' ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
 }
 
-function sortableValue(c: Colaborador, col: string, registrosPorEstado: Record<string, number>): string | number {
-  switch (col) {
-    case 'nome': return c.nome.toLowerCase();
-    case 'profissao': return (c.profissao || '').toLowerCase();
-    case 'escolaridade': return (c.escolaridade || '').toLowerCase();
-    case 'genero': return (c.genero || '').toLowerCase();
-    case 'estado': return c.estado;
-    case 'cidade': return c.cidade.toLowerCase();
-    case 'orgao': return (c.orgao || '').toLowerCase();
-    case 'especialidade': return (c.especialidade || '').toLowerCase();
-    case 'areaConhecimento': return (c.areaConhecimento || '').toLowerCase();
-    case 'registros': return registrosPorEstado[c.estado] || 0;
-    default: return '';
-  }
+// Column filter component
+function ColumnFilter({ values, selected, onChange }: { values: string[]; selected: Set<string>; onChange: (s: Set<string>) => void }) {
+  const allSelected = selected.size === values.length;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 ml-1" onClick={e => e.stopPropagation()}>
+          <Filter className={`h-3 w-3 ${selected.size < values.length ? 'text-primary' : 'opacity-40'}`} />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 max-h-64 overflow-auto p-2" align="start" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border">
+          <Checkbox checked={allSelected} onCheckedChange={() => {
+            onChange(allSelected ? new Set() : new Set(values));
+          }} />
+          <span className="text-xs font-medium">{allSelected ? 'Desmarcar todos' : 'Selecionar todos'}</span>
+        </div>
+        {values.map(v => (
+          <label key={v} className="flex items-center gap-2 py-0.5 cursor-pointer text-xs">
+            <Checkbox checked={selected.has(v)} onCheckedChange={() => {
+              const next = new Set(selected);
+              next.has(v) ? next.delete(v) : next.add(v);
+              onChange(next);
+            }} />
+            <span className="truncate">{v || '—'}</span>
+          </label>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
 }
+
+const COL_WIDTHS: Record<string, string> = {
+  nome: 'w-[180px] min-w-[180px]',
+  profissao: 'w-[140px] min-w-[140px]',
+  escolaridade: 'w-[130px] min-w-[130px]',
+  genero: 'w-[90px] min-w-[90px]',
+  estado: 'w-[80px] min-w-[80px]',
+  cidade: 'w-[140px] min-w-[140px]',
+  especialidade: 'w-[150px] min-w-[150px]',
+  areaConhecimento: 'w-[160px] min-w-[160px]',
+  registros: 'w-[110px] min-w-[110px]',
+};
 
 export function ColaboradoresTable({ colaboradores, registros }: Props) {
   const [tipo, setTipo] = useState<'colaborador' | 'especialista'>('colaborador');
   const [search, setSearch] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('all');
   const [visibleCount, setVisibleCount] = useState(20);
-  const [sort, setSort] = useState<SortState>({ col: '', dir: null });
+  const [sortDir, setSortDir] = useState<SortDir>(null);
+
+  // Column filters state
+  const [colFilters, setColFilters] = useState<Record<string, Set<string>>>({});
 
   const registrosPorEstado = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -59,11 +91,32 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
     return Array.from(set).sort();
   }, [colaboradores]);
 
-  const toggleSort = (col: string) => {
-    setSort(prev => {
-      if (prev.col !== col) return { col, dir: 'asc' };
-      if (prev.dir === 'asc') return { col, dir: 'desc' };
-      return { col: '', dir: null };
+  // Get unique values for filterable columns
+  const uniqueValues = useMemo(() => {
+    const vals: Record<string, Set<string>> = {};
+    const filterableCols = ['profissao', 'escolaridade', 'genero', 'estado', 'cidade', 'especialidade', 'areaConhecimento'];
+    filterableCols.forEach(col => vals[col] = new Set());
+    colaboradores.filter(c => c.tipo === tipo).forEach(c => {
+      filterableCols.forEach(col => {
+        const v = (c as any)[col] || '';
+        if (v) vals[col].add(v);
+      });
+    });
+    const result: Record<string, string[]> = {};
+    filterableCols.forEach(col => { result[col] = Array.from(vals[col]).sort(); });
+    return result;
+  }, [colaboradores, tipo]);
+
+  const updateFilter = useCallback((col: string, selected: Set<string>) => {
+    setColFilters(prev => ({ ...prev, [col]: selected }));
+    setVisibleCount(20);
+  }, []);
+
+  const toggleSort = () => {
+    setSortDir(prev => {
+      if (!prev) return 'asc';
+      if (prev === 'asc') return 'desc';
+      return null;
     });
   };
 
@@ -77,43 +130,64 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
         c.profissao.toLowerCase().includes(s) || c.email.toLowerCase().includes(s)
       );
     }
-    if (sort.col && sort.dir) {
+    // Apply column filters
+    Object.entries(colFilters).forEach(([col, selected]) => {
+      if (selected.size > 0 && uniqueValues[col] && selected.size < uniqueValues[col].length) {
+        list = list.filter(c => selected.has((c as any)[col] || ''));
+      }
+    });
+    // Sort by registros only
+    if (sortDir) {
       list = [...list].sort((a, b) => {
-        const va = sortableValue(a, sort.col, registrosPorEstado);
-        const vb = sortableValue(b, sort.col, registrosPorEstado);
-        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-        return sort.dir === 'asc' ? cmp : -cmp;
+        const va = registrosPorEstado[a.estado] || 0;
+        const vb = registrosPorEstado[b.estado] || 0;
+        return sortDir === 'asc' ? va - vb : vb - va;
       });
     }
     return list;
-  }, [colaboradores, tipo, estadoFilter, search, sort, registrosPorEstado]);
+  }, [colaboradores, tipo, estadoFilter, search, sortDir, registrosPorEstado, colFilters, uniqueValues]);
 
   const visible = filtered.slice(0, visibleCount);
   const totalColab = colaboradores.filter(c => c.tipo === 'colaborador').length;
   const totalEsp = colaboradores.filter(c => c.tipo === 'especialista').length;
 
   const colabColumns = [
-    { key: 'nome', label: 'Nome' }, { key: 'profissao', label: 'Profissão' },
-    { key: 'escolaridade', label: 'Escolaridade' }, { key: 'genero', label: 'Gênero' },
-    { key: 'estado', label: 'Estado' }, { key: 'cidade', label: 'Cidade' },
-    { key: 'orgao', label: 'Órgão' }, { key: 'registros', label: 'Registros (UF)' },
+    { key: 'nome', label: 'Nome', filterable: false },
+    { key: 'profissao', label: 'Profissão', filterable: true },
+    { key: 'escolaridade', label: 'Escolaridade', filterable: true },
+    { key: 'genero', label: 'Gênero', filterable: true },
+    { key: 'estado', label: 'Estado', filterable: true },
+    { key: 'cidade', label: 'Cidade', filterable: true },
+    { key: 'registros', label: 'Registros (UF)', filterable: false, sortable: true },
   ];
 
   const espColumns = [
-    { key: 'nome', label: 'Nome' }, { key: 'especialidade', label: 'Especialidade' },
-    { key: 'areaConhecimento', label: 'Área de Conhecimento' }, { key: 'profissao', label: 'Profissão' },
-    { key: 'escolaridade', label: 'Escolaridade' }, { key: 'estado', label: 'Estado' },
-    { key: 'cidade', label: 'Cidade' }, { key: 'registros', label: 'Registros (UF)' },
+    { key: 'nome', label: 'Nome', filterable: false },
+    { key: 'especialidade', label: 'Especialidade', filterable: true },
+    { key: 'areaConhecimento', label: 'Área de Conhecimento', filterable: true },
+    { key: 'profissao', label: 'Profissão', filterable: true },
+    { key: 'escolaridade', label: 'Escolaridade', filterable: true },
+    { key: 'estado', label: 'Estado', filterable: true },
+    { key: 'cidade', label: 'Cidade', filterable: true },
+    { key: 'registros', label: 'Registros (UF)', filterable: false, sortable: true },
   ];
 
   const renderHeader = (columns: typeof colabColumns) => (
     <TableHeader>
       <TableRow>
         {columns.map(col => (
-          <TableHead key={col.key} className="cursor-pointer select-none" onClick={() => toggleSort(col.key)}>
+          <TableHead key={col.key} className={`${COL_WIDTHS[col.key] || ''} ${col.sortable ? 'cursor-pointer select-none' : ''}`}
+            onClick={col.sortable ? toggleSort : undefined}>
             <div className="flex items-center">
               {col.label}
-              <SortIcon active={sort.col === col.key} dir={sort.col === col.key ? sort.dir : null} />
+              {col.sortable && <SortIcon active dir={sortDir} />}
+              {col.filterable && uniqueValues[col.key] && (
+                <ColumnFilter
+                  values={uniqueValues[col.key]}
+                  selected={colFilters[col.key] || new Set(uniqueValues[col.key])}
+                  onChange={s => updateFilter(col.key, s)}
+                />
+              )}
             </div>
           </TableHead>
         ))}
@@ -123,27 +197,26 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
 
   const renderColabRow = (c: Colaborador) => (
     <TableRow key={c.id}>
-      <TableCell className="font-medium">{c.nome}</TableCell>
-      <TableCell>{c.profissao || '—'}</TableCell>
-      <TableCell>{c.escolaridade || '—'}</TableCell>
-      <TableCell>{c.genero || '—'}</TableCell>
-      <TableCell><Badge variant="outline">{c.estado}</Badge></TableCell>
-      <TableCell>{c.cidade}</TableCell>
-      <TableCell>{c.orgao || '—'}</TableCell>
-      <TableCell className="text-center">{(registrosPorEstado[c.estado] || 0).toLocaleString('pt-BR')}</TableCell>
+      <TableCell className={`font-medium ${COL_WIDTHS.nome}`}>{c.nome}</TableCell>
+      <TableCell className={COL_WIDTHS.profissao}>{c.profissao || '—'}</TableCell>
+      <TableCell className={COL_WIDTHS.escolaridade}>{c.escolaridade || '—'}</TableCell>
+      <TableCell className={COL_WIDTHS.genero}>{c.genero || '—'}</TableCell>
+      <TableCell className={COL_WIDTHS.estado}><Badge variant="outline">{c.estado}</Badge></TableCell>
+      <TableCell className={COL_WIDTHS.cidade}>{c.cidade}</TableCell>
+      <TableCell className={`text-center ${COL_WIDTHS.registros}`}>{(registrosPorEstado[c.estado] || 0).toLocaleString('pt-BR')}</TableCell>
     </TableRow>
   );
 
   const renderEspRow = (c: Colaborador) => (
     <TableRow key={c.id}>
-      <TableCell className="font-medium">{c.nome}</TableCell>
-      <TableCell><Badge>{c.especialidade}</Badge></TableCell>
-      <TableCell>{c.areaConhecimento || '—'}</TableCell>
-      <TableCell>{c.profissao || '—'}</TableCell>
-      <TableCell>{c.escolaridade || '—'}</TableCell>
-      <TableCell><Badge variant="outline">{c.estado}</Badge></TableCell>
-      <TableCell>{c.cidade}</TableCell>
-      <TableCell className="text-center">{(registrosPorEstado[c.estado] || 0).toLocaleString('pt-BR')}</TableCell>
+      <TableCell className={`font-medium ${COL_WIDTHS.nome}`}>{c.nome}</TableCell>
+      <TableCell className={COL_WIDTHS.especialidade}><Badge>{c.especialidade}</Badge></TableCell>
+      <TableCell className={COL_WIDTHS.areaConhecimento}>{c.areaConhecimento || '—'}</TableCell>
+      <TableCell className={COL_WIDTHS.profissao}>{c.profissao || '—'}</TableCell>
+      <TableCell className={COL_WIDTHS.escolaridade}>{c.escolaridade || '—'}</TableCell>
+      <TableCell className={COL_WIDTHS.estado}><Badge variant="outline">{c.estado}</Badge></TableCell>
+      <TableCell className={COL_WIDTHS.cidade}>{c.cidade}</TableCell>
+      <TableCell className={`text-center ${COL_WIDTHS.registros}`}>{(registrosPorEstado[c.estado] || 0).toLocaleString('pt-BR')}</TableCell>
     </TableRow>
   );
 
@@ -161,7 +234,7 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="col-span-1 grid grid-cols-1 gap-4">
           <Card>
-            <CardContent className="p-4 flex items-center-top gap-3">
+            <CardContent className="p-4 flex items-start gap-3">
               <Users className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Colaboradores</p>
@@ -170,7 +243,7 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 flex items-center-top gap-3">
+            <CardContent className="p-4 flex items-start gap-3">
               <GraduationCap className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Especialistas</p>
@@ -179,7 +252,7 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 flex items-center-top gap-3">
+            <CardContent className="p-4 flex items-start gap-3">
               <MapPin className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Estados</p>
@@ -213,7 +286,7 @@ export function ColaboradoresTable({ colaboradores, registros }: Props) {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={tipo} onValueChange={v => { setTipo(v as any); setVisibleCount(20); setSort({ col: '', dir: null }); }}>
+          <Tabs value={tipo} onValueChange={v => { setTipo(v as any); setVisibleCount(20); setSortDir(null); setColFilters({}); }}>
             <TabsList>
               <TabsTrigger value="colaborador" className="gap-2">
                 <Users className="h-4 w-4" />Colaboradores ({totalColab.toLocaleString('pt-BR')})
