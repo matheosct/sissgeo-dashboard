@@ -39,24 +39,19 @@ function ForecastCard({ registros }: { registros: Registro[] }) {
 
     // Historical data for chart
     const hist = recent.slice(-14).map(([date, count]) => ({
-      date: date.slice(5), // MM-DD
+      date: date.slice(5),
       registros: count,
-      tipo: 'real' as const,
     }));
 
     // Forecast next 7 days
     const lastDate = new Date(recent[recent.length - 1][0]);
-    const fc: typeof hist = [];
+    const fc: { date: string; registros: number }[] = [];
     let total7d = 0;
     for (let i = 1; i <= 7; i++) {
       const d = new Date(lastDate.getTime() + i * 24 * 60 * 60 * 1000);
       const predicted = Math.max(0, Math.round(intercept + slope * (n - 1 + i)));
       total7d += predicted;
-      fc.push({
-        date: d.toISOString().slice(5, 10),
-        registros: predicted,
-        tipo: 'previsão' as const,
-      });
+      fc.push({ date: d.toISOString().slice(5, 10), registros: predicted });
     }
 
     return {
