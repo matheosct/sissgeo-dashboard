@@ -66,21 +66,15 @@ function ForecastCard({ registros }: { registros: Registro[] }) {
     };
   }, [registros]);
 
-  const chartData = [
-    ...historical.map(d => ({ ...d, real: d.registros, previsao: undefined as number | undefined })),
-    ...forecast.map(d => ({ ...d, real: undefined as number | undefined, previsao: d.registros })),
+  const chartData: { date: string; real?: number; previsao?: number }[] = [
+    ...historical.map(d => ({ date: d.date, real: d.registros, previsao: undefined as number | undefined })),
+    ...forecast.map(d => ({ date: d.date, real: undefined as number | undefined, previsao: d.registros })),
   ];
 
-  // Connect the two lines by duplicating last historical point
+  // Bridge point
   if (historical.length > 0 && forecast.length > 0) {
     const bridge = historical[historical.length - 1];
-    chartData.splice(historical.length, 0, {
-      date: bridge.date,
-      registros: bridge.registros,
-      tipo: 'previsão',
-      real: undefined,
-      previsao: bridge.registros,
-    });
+    chartData.splice(historical.length, 0, { date: bridge.date, previsao: bridge.registros });
   }
 
   return (
