@@ -1,22 +1,18 @@
 import { useRegistros } from '@/hooks/useRegistros';
 import { useColaboradores } from '@/hooks/useColaboradores';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { StatCards } from '@/components/StatCards';
 import { RecentRegistros } from '@/components/RecentRegistros';
 import { TopAnimals } from '@/components/TopAnimals';
 import { TimeChart } from '@/components/TimeChart';
 import { BrazilMap } from '@/components/BrazilMap';
-import { CSVUpload } from '@/components/CSVUpload';
-import { Loader2, Activity } from 'lucide-react';
-import { AppNavLink } from '@/components/AppNavLink';
+import { Loader2 } from 'lucide-react';
+import { AppHeader } from '@/components/AppHeader';
 
 const Index = () => {
   const { data: registros, loading: loadingReg, updateFromCSV: updateRegistros } = useRegistros();
   const { loading: loadingColab } = useColaboradores();
 
-  const loading = loadingReg || loadingColab;
-
-  if (loading) {
+  if (loadingReg || loadingColab) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -26,36 +22,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
-        <div className="container mx-auto flex items-center justify-between h-14 px-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Activity className="h-6 w-6 text-primary" />
-              <h1 className="text-lg font-bold">Dashboard SISS-Geo</h1>
-            </div>
-            <nav className="flex items-center gap-1">
-              <AppNavLink to="/" label="Registros" active />
-              <AppNavLink to="/colaboradores" label="Colaboradores" />
-              <AppNavLink to="/insights" label="Insights" />
-            </nav>
-          </div>
-          <div className="flex items-center gap-2">
-            <CSVUpload onUpload={updateRegistros} />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
+      <AppHeader showUpload onUpload={updateRegistros} />
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <StatCards data={registros} />
           <TopAnimals data={registros} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div style={{ height: '460px' }}>
-              <RecentRegistros data={registros} />
-            </div>
-            <BrazilMap data={registros} />
+          <div style={{ height: '460px' }}>
+            <RecentRegistros data={registros} />
+          </div>
+          <BrazilMap data={registros} />
         </div>
         <TimeChart data={registros} />
       </main>
