@@ -237,6 +237,163 @@ function UserSimilarityCard({ colaboradores, registros }: { colaboradores: Colab
   );
 }
 
+/* ── 3. Anomaly Detection (IQR method) ── */
+function AnomalyDetectionCard({ registros }: { registros: Registro[] }) {
+  const anomalies = useMemo(() => {
+    // Count animals per state
+    const stateAnimals: Record<string, Record<string, number>> = {};
+    const stateTotals: Record<string, number> = {};
+    registros.forEach(r => {
+      if (!stateAnimals[r.state]) stateAnimals[r.state] = {};
+      stateAnimals[r.state][r.animalType] = (stateAnimals[r.state][r.animalType] || 0) + 1;
+      stateTotals[r.state] = (stateTotals[r.state] || 0) + 1;
+    });
+
+    const results: {
+      state: string;
+      region: string;
+      total: number;
+      anomalies: { animal: string; count: number; severity: 'high' | 'low' }[];
+      anomalyTotal: number;
+    }[] = [];
+
+    Object.entries(stateAnimals).forEach(([state, animals]) => {
+      const counts = Object.values(animals);
+      if (counts.length < 4) return; // need enough data points
+
+      const sorted = [...counts].sort((a, b) => a - b);
+      const q1 = sorted[Math.floor(sorted.length * 0.25)];
+      const q3 = sorted[Math.floor(sorted.length * 0.75)];
+      const iqr = q3 - q1;
+      const lowerBound = q1 - 1.5 * iqr;
+      const upperBound = q3 + 1.5 * iqr;
+
+      const stateAnomalies: { animal: string; count: number; severity: 'high' | 'low' }[] = [];
+      Object.entries(animals).forEach(([animal, count]) => {
+        if (count > upperBound) {
+          stateAnomalies.push({ animal, count, severity: 'high' });
+        } else if (count < lowerBound && lowerBound > 0) {
+          stateAnomalies.push({ animal, count, severity: 'low' });
+        }
+      });
+
+      if (stateAnomalies.length > 0) {
+        stateAnomalies.sort((a, b) => b.count - a.count);
+        const anomalyTotal = stateAnomalies.reduce((s, a) => s + a.count, 0);
+        results.push({
+          state,
+          region: STATE_TO_REGION[state] || '',
+          total: stateTotals[state],
+          anomalies: stateAnomalies,
+          anomalyTotal,
+        });
+      }
+    });
+
+    results.sort((a, b) => b.anomalyTotal - a.anomalyTotal);
+
+    const totalAnomalyRecords = results.reduce((s, r) => s + r.anomalyTotal, 0);
+    const totalRecords = registros.length;
+
+    return {
+      states: results,
+      statesWithAnomalies: results.length,
+      totalAnomalyRecords,
+      anomalyPct: totalRecords > 0 ? ((totalAnomalyRecords / totalRecords) * 100).toFixed(1) : '0',
+    };
+  }, [registros]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-destructive" />
+          <CardTitle className="text-lg">Detecção de Anomalias por Estado</CardTitle>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Registros fora do padrão identificados pelo método IQR (Interquartile Range) na distribuição de tipos por UF.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="rounded-lg border p-3 text-center">
+            <p className="text-2xl font-bold text-destructive">{anomalies.statesWithAnomalies}</p>
+            <p className="text-xs text-muted-foreground">UFs com anomalias</p>
+          </div>
+          <div className="rounded-lg border p-3 text-center">
+            <p className="text-2xl font-bold">{anomalies.totalAnomalyRecords}</p>
+            <p className="text-xs text-muted-foreground">Registros anômalos</p>
+          </div>
+          <div className="rounded-lg border p-3 text-center">
+            <p className="text-2xl font-bold">{anomalies.anomalyPct}%</p>
+            <p className="text-xs text-muted-foreground">do total</p>
+          </div>
+        </div>
+
+        {anomalies.states.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">Nenhuma anomalia detectada nos dados atuais.</p>
+        ) : (
+          <div className="overflow-auto max-h-[500px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">UF</TableHead>
+                  <TableHead className="w-[90px]">Região</TableHead>
+                  <TableHead className="w-[100px] text-right">Total</TableHead>
+                  <TableHead>Anomalias encontradas</TableHead>
+                  <TableHead className="w-[140px]">Normal vs Anômalo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {anomalies.states.map(s => {
+                  const anomalyPct = (s.anomalyTotal / s.total) * 100;
+                  return (
+                    <TableRow key={s.state}>
+                      <TableCell>
+                        <Badge variant="outline" className="font-mono">{s.state}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{s.region}</TableCell>
+                      <TableCell className="text-right font-medium">{s.total}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {s.anomalies.map(a => (
+                            <span
+                              key={a.animal}
+                              className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                a.severity === 'high'
+                                  ? 'bg-destructive/15 text-destructive'
+                                  : 'bg-accent text-accent-foreground'
+                              }`}
+                            >
+                              {a.animal} ({a.count})
+                            </span>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Progress value={100 - anomalyPct} className="h-2 flex-1" />
+                          <span className="text-[10px] text-muted-foreground w-[35px] text-right">
+                            {anomalyPct.toFixed(0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground mt-3">
+          ⚠️ Anomalias = tipos de animal com contagem fora do intervalo [Q1−1.5×IQR, Q3+1.5×IQR] dentro de cada estado.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ── Main Page ── */
 const Robots = () => {
   const { data: registros, loading: loadingReg } = useRegistros();
@@ -261,6 +418,7 @@ const Robots = () => {
         </div>
         <ForecastCard registros={registros} />
         <UserSimilarityCard colaboradores={colaboradores} registros={registros} />
+        <AnomalyDetectionCard registros={registros} />
       </main>
     </div>
   );
