@@ -11,6 +11,7 @@ import { STATE_TO_REGION } from '@/lib/regionUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LineChart, Line } from 'recharts';
 import { AppHeader } from '@/components/AppHeader';
 import { Badge } from '@/components/ui/badge';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 /* ── 1. Forecast (Simple ARIMA-like: linear regression on daily counts) ── */
 function ForecastCard({ registros }: { registros: Registro[] }) {
@@ -77,7 +78,7 @@ function ForecastCard({ registros }: { registros: Registro[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Previsão de Registros (7 dias)</CardTitle></div>
+        <div className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Previsão de Registros (7 dias)</CardTitle><InfoTooltip text="Regressão linear aplicada sobre a contagem diária de registros dos últimos 30 dias. A reta y = a + b·x é ajustada por mínimos quadrados e projetada 7 dias à frente. Média diária = média aritmética; Tendência = coeficiente angular (b)." /></div>
         <p className="text-sm text-muted-foreground">Modelo de regressão linear sobre série temporal diária (últimos 30 dias).</p>
       </CardHeader>
       <CardContent>
@@ -182,7 +183,7 @@ function UserSimilarityCard({ colaboradores, registros }: { colaboradores: Colab
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Similaridade entre Usuários (por UF)</CardTitle></div>
+        <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Similaridade entre Usuários (por UF)</CardTitle><InfoTooltip text="Collaborative filtering por similaridade cosseno. Para cada estado, monta-se um vetor com a contagem de cada tipo de animal. A similaridade entre dois estados é cos(θ) = (A·B) / (|A|×|B|). Valores próximos de 100% indicam perfis de fauna muito parecidos." /></div>
         <p className="text-sm text-muted-foreground">Collaborative filtering: similaridade cosseno entre perfis de registros por estado.</p>
       </CardHeader>
       <CardContent>
@@ -270,9 +271,7 @@ function AnomalyDetectionCard({ registros }: { registros: Registro[] }) {
 
       const stateAnomalies: { animal: string; count: number; severity: 'high' | 'low' }[] = [];
       Object.entries(animals).forEach(([animal, count]) => {
-        if (count > upperBound) {
-          stateAnomalies.push({ animal, count, severity: 'high' });
-        } else if (count < lowerBound && lowerBound > 0) {
+        if (count < lowerBound && lowerBound > 0) {
           stateAnomalies.push({ animal, count, severity: 'low' });
         }
       });
@@ -309,6 +308,7 @@ function AnomalyDetectionCard({ registros }: { registros: Registro[] }) {
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-destructive" />
           <CardTitle className="text-lg">Detecção de Anomalias por Estado</CardTitle>
+          <InfoTooltip text="Método IQR (Interquartile Range): para cada estado, calcula-se Q1 (25º percentil) e Q3 (75º percentil) das contagens por tipo de animal. IQR = Q3 − Q1. Tipos com contagem abaixo de Q1 − 1.5×IQR são marcados como anomalias (registros incomumente raros). Estados precisam de pelo menos 4 tipos distintos." />
         </div>
         <p className="text-sm text-muted-foreground">
           Registros fora do padrão identificados pelo método IQR (Interquartile Range) na distribuição de tipos por UF.
@@ -387,7 +387,7 @@ function AnomalyDetectionCard({ registros }: { registros: Registro[] }) {
         )}
 
         <p className="text-xs text-muted-foreground mt-3">
-          ⚠️ Anomalias = tipos de animal com contagem fora do intervalo [Q1−1.5×IQR, Q3+1.5×IQR] dentro de cada estado.
+          ⚠️ Anomalias = tipos de animal com contagem abaixo do limite inferior Q1 − 1.5×IQR dentro de cada estado.
         </p>
       </CardContent>
     </Card>
