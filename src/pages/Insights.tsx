@@ -9,6 +9,7 @@ import { Colaborador } from '@/lib/colaboradorUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ScatterChart, Scatter, ZAxis, Cell } from 'recharts';
 import { AppHeader } from '@/components/AppHeader';
 import { Badge } from '@/components/ui/badge';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 /* ── helpers ── */
 function calcShannon(records: Registro[]): number {
@@ -51,7 +52,7 @@ function SpeciesDiversityCard({ registros }: { registros: Registro[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><Leaf className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Diversidade de Espécies por Região</CardTitle></div>
+        <div className="flex items-center gap-2"><Leaf className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Diversidade de Espécies por Região</CardTitle><InfoTooltip text="Índice Shannon-Wiener: H = −Σ(pᵢ × ln(pᵢ)), onde pᵢ é a proporção de cada espécie na região. Valores maiores indicam maior diversidade. Espécies únicas = contagem de tipos distintos de animais registrados." /></div>
         <p className="text-sm text-muted-foreground">Espécies únicas, registros e índice Shannon-Wiener.</p>
       </CardHeader>
       <CardContent>
@@ -121,7 +122,7 @@ function EducationQualityCard({ colaboradores, registros }: { colaboradores: Col
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Formação vs Qualidade dos Registros</CardTitle></div>
+        <div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Formação vs Qualidade dos Registros</CardTitle><InfoTooltip text="Correlação entre escolaridade dos colaboradores e a qualidade dos registros. Média de registros = total de registros nas UFs associadas à escolaridade / nº de UFs. Completude = percentual médio de campos preenchidos (animal, data observação, estado, cidade, data inclusão)." /></div>
         <p className="text-sm text-muted-foreground">Correlação entre escolaridade, volume e completude.</p>
       </CardHeader>
       <CardContent>
@@ -160,7 +161,7 @@ function RetentionCard({ registros }: { registros: Registro[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Retenção e Consistência</CardTitle></div>
+        <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Retenção e Consistência</CardTitle><InfoTooltip text="Dias Ativo = intervalo entre o primeiro e último registro da UF. Meses Ativos = meses distintos com pelo menos um registro. Taxa Diária = (total de registros / dias ativo) × 100. Exibe apenas UFs com 5+ registros, ordenadas por atividade total." /></div>
         <p className="text-sm text-muted-foreground">UFs que mantêm registros consistentes por mais tempo.</p>
       </CardHeader>
       <CardContent>
@@ -250,7 +251,7 @@ function ProfileClusterCard({ colaboradores, registros }: { colaboradores: Colab
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Perfil de Usuários Ativos — Clusterização</CardTitle></div>
+        <div className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Perfil de Usuários Ativos — Clusterização</CardTitle><InfoTooltip text="Agrupamento baseado em regras: Acadêmicos Engajados = alta formação + alta atividade; Exploradores Urbanos = regiões Sudeste/Sul + alta atividade; Sentinelas = regiões Norte/Centro-Oeste; Observadores = demais. Alta atividade = registros da UF acima da média nacional por estado." /></div>
         <p className="text-sm text-muted-foreground">Agrupamento por idade, gênero, formação, região e volume de registros.</p>
       </CardHeader>
       <CardContent>
@@ -313,7 +314,7 @@ function SeasonalHeatmapCard({ registros }: { registros: Registro[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><Flame className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Padrões Sazonais — Heatmap Temporal</CardTitle></div>
+        <div className="flex items-center gap-2"><Flame className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Padrões Sazonais — Heatmap Temporal</CardTitle><InfoTooltip text="Heatmap de contagem cruzando mês de observação × tipo de animal (top 8 mais frequentes). A intensidade da cor é proporcional à contagem relativa ao máximo observado. Permite identificar picos sazonais de cada espécie." /></div>
         <p className="text-sm text-muted-foreground">Cruzamento de mês × tipo de animal para identificar sazonalidade.</p>
       </CardHeader>
       <CardContent>
@@ -433,7 +434,7 @@ function EngagementFunnelCard({ registros }: { registros: Registro[] }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Funil de Engajamento</CardTitle></div>
+        <div className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Funil de Engajamento</CardTitle><InfoTooltip text="DAU/MAU = UFs ativas hoje / ativas nos últimos 30 dias. Retenção D1/D7/D30 = % de UFs que registraram atividade 1, 7 e 30 dias após o primeiro registro. Churn = UFs sem atividade nos últimos 30 dias. Usa UFs como proxy para grupos de usuários." /></div>
         <p className="text-sm text-muted-foreground">DAU/MAU, retenção D1/D7/D30 e churn por UF.</p>
       </CardHeader>
       <CardContent>
@@ -497,7 +498,7 @@ function OpportunityMapCard({ colaboradores, registros }: { colaboradores: Colab
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2"><Map className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Mapa de Oportunidades</CardTitle></div>
+        <div className="flex items-center gap-2"><Map className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Mapa de Oportunidades</CardTitle><InfoTooltip text="Dispersão colaboradores × registros por UF. Ratio = registros / colaboradores. UFs com ratio baixo (<1) indicam potencial subaproveitado — muitos colaboradores mas poucos registros. Útil para direcionar campanhas de engajamento." /></div>
         <p className="text-sm text-muted-foreground">Mais colaboradores = mais registros? Análise por UF.</p>
       </CardHeader>
       <CardContent>
