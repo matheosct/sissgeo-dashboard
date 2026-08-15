@@ -9,6 +9,13 @@ Case sobre o dashboard de registros de fauna (Registros, Colaboradores, Insights
 3. **Objetivo e perguntas de negócio** — liste as perguntas que o produto responde: onde há mais registros? quem contribui de forma consistente? onde faltam coletas? o que é um registro fora do padrão?
 4. **Processo** — como você foi do CSV às perguntas: exploração dos dados, definição de métricas, arquitetura de informação em 4 páginas, iteração com base em feedback.
 5. **Arquitetura de informação** — por que 4 áreas separadas (visão operacional → pessoas → correlações → modelos preditivos), diagrama simples do menu.
+
+   **As páginas e seus objetivos:**
+
+   - **Registros** — visão operacional do dia a dia. Mostra totais, espécies mais registradas, últimos registros, evolução temporal e o mapa do Brasil. Objetivo: responder "como estamos agora e onde os dados estão sendo produzidos", em poucos segundos de leitura.
+   - **Colaboradores** — visão de pessoas. Tabela de colaboradores e especialistas com largura fixa, filtros por valor em cada coluna e ordenação por número de registros, além da distribuição por estado agrupada por região. Objetivo: identificar quem contribui, com qual perfil e de onde, permitindo ligar cada usuário aos seus registros.
+   - **Insights** — visão de correlações. Cruza os dados de pessoas com os de registros: diversidade de espécies por região (Shannon-Wiener), formação vs. quantidade e completude dos registros, retenção por perfil, clusterização de perfis ativos, heatmap sazonal, funil de engajamento (DAU/MAU, D1/D7/D30, churn) e mapa de oportunidades de coleta. Objetivo: sair da descrição e chegar à explicação — por que certos grupos e regiões produzem mais e melhor.
+   - **Robots** — visão preditiva e experimental. Previsão de registros para 7 dias, similaridade entre UFs por perfil de fauna (filtragem colaborativa) e detecção de registros incomuns por estado pelo método IQR. Objetivo: apoiar decisões futuras (onde agir, o que investigar), com as limitações dos modelos declaradas na própria interface.
 6. **Decisões de design (o coração do case)** — 3 a 5 decisões com antes/depois:
    - tabela com largura fixa de colunas e filtros por valor (multi-seleção) em vez de ordenação em toda coluna;
    - troca do card "total de registros" por distribuição por estado agrupada por região;
